@@ -54,8 +54,6 @@ def create_booking_table():
         guest_id = pandas.read_sql(" SELECT id FROM guests", conn)
         guest_id.columns = ["guest_id"]
 
-
-
     #Create the table
     with sqlite3.connect("/app/data/bookings.db") as conn:
         cur = conn.cursor()
@@ -65,9 +63,12 @@ def create_booking_table():
                     days_rented INTEGER,
                     season TEXT,
                     price INTEGER,
-                    room_type TEXT,
+                    room_number,
                     guest_id INTEGER
                     )""")
+        
+        # CHECK WITH CLAUS IF WE NEED TO USE THE OLD DATA?????? THEN ALMOST ALL OF THIS SHOULDNT BE USED!!!!!!!!!!!
+        """
         #Get the data
         data = pandas.read_excel(filepath_rooms, usecols=["Days Rented", "Season", "Price","Room Type"])
 
@@ -81,10 +82,69 @@ def create_booking_table():
         #Insert the data
         data.to_sql("bookings", conn, if_exists="append", index=False)
         conn.commit()
+        """
+
+def create_bill_table():
+    #Create the table
+    with sqlite3.connect("/app/data/bills.db") as conn:
+        cur = conn.cursor()
+        cur.execute(""" CREATE TABLE IF NOT EXISTS bills
+                    (
+                    guest_id INTEGER, 
+                    item TEXT,
+                    price INTEGER,
+                    paid_status BOOLEAN,
+                    bill_id INTEGER PRIMARY KEY
+                    )
+                    """)
+        # No initial data is needed - Commit the table
+        conn.commit()
+
+
+def create_rooms_table():
+    #Create the table
+    with sqlite3.connect("/app/data/rooms.db") as conn:
+        cur = conn.cursor()
+        cur.execute(""" CREATE TABLE IF NOT EXISTS rooms
+                    (
+                    room_number INTEGER PRIMARY KEY,
+                    room_type TEXT,
+                    availability BOOLEAN,
+                    cleaned_status BOOLEAN
+                    )
+                    """)
+        # Self made data on the amount of rooms.
+        rooms = [
+            {"room_type": "Spa Executive", "amount": 3},
+            {"room_type": "Grand Lit", "amount": 6},
+            {"room_type": "Standard Single", "amount": 20},
+            {"room_type": "LOFT Suite", "amount": 4},
+            {"room_type": "Suite", "amount": 5},
+            {"room_type": "Standard Double", "amount": 15},
+            {"room_type": "Junior Suite", "amount": 7},
+            {"room_type": "Superior Double", "amount": 2}
+]
+
+
+        # Iteriate through each roomtype and create the right amount of rooms
+        for room in rooms:
+            current_room_type = room["room_type"]
+            amount = room["amount"]
+            for amount in range(amount):
+                cur.execute(" INSERT INTO rooms (room_type, availability, cleaned_status) VALUES (?,?,?)", (current_room_type, True, True))
+        conn.commit()
+
+
+
+# Run all of the create database functions. 
 
 create_guest_table()
 create_drinks_table()
 create_booking_table()
+create_bill_table()
+create_rooms_table()
+
+#
 
 
 #Change path to make i accessable in the volume

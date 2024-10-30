@@ -135,6 +135,28 @@ def create_rooms_table():
         conn.commit()
 
 
+def create_rooms_price_table():
+    with sqlite3.connect("/app/data/rooms.db") as conn:
+        cur = conn.cursor()
+        cur.execute(""" CREATE TABLE IF NOT EXISTS datarooms
+""")
+
+
+"""
+        #Get the data
+        data = pandas.read_excel(filepath_rooms, usecols=["Days Rented", "Season", "Price","Room Type"])
+
+        #Format the columns name
+        data.columns = ["room_type", "days_rented", "season", "price"]
+
+        #Merge the data 
+        data["guest_id"] = guest_id["guest_id"]
+    
+
+        #Insert the data
+        data.to_sql("bookings", conn, if_exists="append", index=False)
+        conn.commit()
+        """
 
 # Run all of the create database functions. 
 
@@ -144,7 +166,7 @@ create_booking_table()
 create_bill_table()
 create_rooms_table()
 
-#
+
 
 
 #Change path to make i accessable in the volume

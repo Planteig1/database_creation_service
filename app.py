@@ -64,26 +64,12 @@ def create_booking_table():
                     season TEXT,
                     price INTEGER,
                     room_number,
-                    guest_id INTEGER
+                    guest_id INTEGER,
+                    number_of_guests INTEGER,
+                    start_date DATE,
+                    end_DATE DATE
                     )""")
         
-        # CHECK WITH CLAUS IF WE NEED TO USE THE OLD DATA?????? THEN ALMOST ALL OF THIS SHOULDNT BE USED!!!!!!!!!!!
-        """
-        #Get the data
-        data = pandas.read_excel(filepath_rooms, usecols=["Days Rented", "Season", "Price","Room Type"])
-
-        #Format the columns name
-        data.columns = ["room_type", "days_rented", "season", "price"]
-
-        #Merge the data 
-        data["guest_id"] = guest_id["guest_id"]
-    
-
-        #Insert the data
-        data.to_sql("bookings", conn, if_exists="append", index=False)
-        conn.commit()
-        """
-
 def create_bill_table():
     #Create the table
     with sqlite3.connect("/app/data/bills.db") as conn:
@@ -136,27 +122,47 @@ def create_rooms_table():
 
 
 def create_rooms_price_table():
-    with sqlite3.connect("/app/data/rooms.db") as conn:
+    with sqlite3.connect("/app/data/datarooms.db") as conn:
         cur = conn.cursor()
+        #Create the table with all the data - used to 
         cur.execute(""" CREATE TABLE IF NOT EXISTS datarooms
-""")
-
-
-"""
+                    (
+                    days_rented INTEGER,
+                    season TEXT,
+                    price INTEGER,
+                    room_type TEXT
+                    )
+                    """)
+        conn.commit()
+        
         #Get the data
         data = pandas.read_excel(filepath_rooms, usecols=["Days Rented", "Season", "Price","Room Type"])
 
-        #Format the columns name
-        data.columns = ["room_type", "days_rented", "season", "price"]
-
-        #Merge the data 
-        data["guest_id"] = guest_id["guest_id"]
-    
+        #Format the column names
+        data.columns = ["room_type", "days_rented", "season","price"] 
+             
 
         #Insert the data
-        data.to_sql("bookings", conn, if_exists="append", index=False)
+        data.to_sql("datarooms", conn, if_exists="append", index=False)
         conn.commit()
-        """
+
+        # Create the table with calculated data
+        cur.execute(""" CREATE TABLE IF NOT EXISTS rooms_pricing
+                        (
+                        room_type TEXT,
+                        season TEXT,
+                        daily_price INTEGER
+                        )
+                        """)
+        conn.commit()
+
+        # Run calculations on the dataset and insert the calculated data
+        cur.execute("SELECT room_type, season, SUM(price) / SUM(days_rented) AS daily_price FROM datarooms GROUP BY room_type, season")
+        result = cur.fetchall()
+        #Insert the data into the pricing table
+        cur.executemany(""" INSERT INTO rooms_pricing (room_type, season, daily_price) VALUES (?,?,?)""",result)
+        conn.commit()
+
 
 # Run all of the create database functions. 
 
@@ -165,9 +171,4 @@ create_drinks_table()
 create_booking_table()
 create_bill_table()
 create_rooms_table()
-
-
-
-
-#Change path to make i accessable in the volume
-#"/Users/planteig/Desktop/international_names_with_rooms_1000.xlsx"
+create_rooms_price_table()
